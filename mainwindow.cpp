@@ -29,16 +29,41 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->fileTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     ui->fileTable->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    ui->fileTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     // Interaction
-    connect(ui->goUpDirButton, &QPushButton::clicked, this, &MainWindow::onPressingUpDirButton);
+    connect(ui->goUpDirButton, &QPushButton::clicked, this, &MainWindow::onUpDirButtonClicked);
     connect(ui->navigationTree, &QTreeView::clicked, this, &MainWindow::onTreeItemSelected);
     connect(ui->fileTable, &QTableView::doubleClicked, this, &MainWindow::onFileSystemItemSelected);
+    connect(ui->searchButton, &QPushButton::clicked, this, &MainWindow::onSearchButtonClicked);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+QVector<QFileInfo> MainWindow::searchFile(const QString &directory, const QString &searchName)
+{
+    QVector<QFileInfo> result;
+    QDir dir(directory);
+    dir.setFilter(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot);
+
+    QFileInfoList entries = dir.entryInfoList();
+
+    for (auto entry : entries)
+    {
+        if (entry.fileName().contains(searchName, Qt::CaseInsensitive))
+        {
+            result.append(entry);
+        }
+        if (entry.isDir())
+        {
+            result += searchFile(entry.absoluteFilePath(), searchName);
+        }
+    }
+
+    return result;
 }
 
 void MainWindow::onFileSystemItemSelected(const QModelIndex &index)
@@ -65,11 +90,21 @@ void MainWindow::onTreeItemSelected(const QModelIndex &index)
     }
 }
 
-void MainWindow::onPressingUpDirButton()
+void MainWindow::onUpDirButtonClicked()
 {
     QDir dir(fileModel->getCurrentPath());
     if (dir.cdUp())
     {
         fileModel->loadDirectory(dir.absolutePath());
     }
+}
+
+void MainWindow::onSearchButtonClicked()
+{
+    QString searchName = ui->pathInput->text().trimmed();
+    if (searchName.isEmpty())
+        return;
+    QString directory = fileModel->getCurrentPath();
+    QVector<QFileInfo> result = searchFile(directory, searchName);
+    fileModel->displaySearchResult(result);
 }

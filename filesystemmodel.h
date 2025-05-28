@@ -23,6 +23,8 @@ public:
     QString getCurrentPath();
     void setCurrentPath(const QString &path);
 
+    void displaySearchResult(const QVector<QFileInfo>& results);
+
 private:
     QString currentPath;
     QFileInfoList fileInfoList;
