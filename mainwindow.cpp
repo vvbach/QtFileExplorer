@@ -36,34 +36,14 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->navigationTree, &QTreeView::clicked, this, &MainWindow::onTreeItemSelected);
     connect(ui->fileTable, &QTableView::doubleClicked, this, &MainWindow::onFileSystemItemSelected);
     connect(ui->searchButton, &QPushButton::clicked, this, &MainWindow::onSearchButtonClicked);
+    connect(ui->cancelButton, &QPushButton::clicked, this, &MainWindow::onCancelButtonClicked);
+
+    ui->cancelButton->hide();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-QVector<QFileInfo> MainWindow::searchFile(const QString &directory, const QString &searchName)
-{
-    QVector<QFileInfo> result;
-    QDir dir(directory);
-    dir.setFilter(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot);
-
-    QFileInfoList entries = dir.entryInfoList();
-
-    for (auto entry : entries)
-    {
-        if (entry.fileName().contains(searchName, Qt::CaseInsensitive))
-        {
-            result.append(entry);
-        }
-        if (entry.isDir())
-        {
-            result += searchFile(entry.absoluteFilePath(), searchName);
-        }
-    }
-
-    return result;
 }
 
 void MainWindow::onFileSystemItemSelected(const QModelIndex &index)
@@ -105,6 +85,35 @@ void MainWindow::onSearchButtonClicked()
     if (searchName.isEmpty())
         return;
     QString directory = fileModel->getCurrentPath();
-    QVector<QFileInfo> result = searchFile(directory, searchName);
-    fileModel->displaySearchResult(result);
+
+    ui->cancelButton->show();
+    ui->searchButton->hide();
+    searchThread = new QThread();
+    searchWorker = new SearchWorker();
+    searchWorker->moveToThread(searchThread);
+    fileModel->clear(); 
+
+    connect(searchThread, &QThread::started, [=]()
+            { searchWorker->startSearch(directory, searchName); });
+    connect(searchWorker, &SearchWorker::fileFound, fileModel, &FileSystemModel::displaySearchResult);
+
+    auto finalize = [this]() {
+        ui->cancelButton->hide();
+        ui->searchButton->show();
+        if (searchThread && searchThread->isRunning()) {
+            searchThread->quit();
+        }
+        searchWorker = nullptr;
+        searchThread = nullptr;
+    };
+    connect(searchWorker, &SearchWorker::searchFinished, this, finalize);
+    connect(searchWorker, &SearchWorker::searchCanceled, this, finalize);
+    connect(searchThread, &QThread::finished, searchWorker, &QObject::deleteLater);
+    connect(searchThread, &QThread::finished, searchThread, &QObject::deleteLater);
+    searchThread->start();
+}
+
+void MainWindow::onCancelButtonClicked()
+{
+    if (searchWorker) searchWorker->cancelSearch();
 }

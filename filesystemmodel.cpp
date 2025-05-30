@@ -1,6 +1,7 @@
 #include "filesystemmodel.h"
 #include <QApplication>
 #include <QStyle>
+#include <QDebug>
 
 FileSystemModel::FileSystemModel(QObject *parent) : QAbstractTableModel(parent) {}
 
@@ -111,9 +112,16 @@ void FileSystemModel::setCurrentPath(const QString &path)
     currentPath = path;
 }
 
-void FileSystemModel::displaySearchResult(const QVector<QFileInfo>& results)
+void FileSystemModel::displaySearchResult(const QFileInfo &file)
 {
-    fileInfoList = results.toList();
+    beginInsertRows(QModelIndex(), fileInfoList.size(), fileInfoList.size());
+    fileInfoList.append(file);
+    endInsertRows();
+}
+
+void FileSystemModel::clear()
+{
     beginResetModel();
+    fileInfoList.clear();
     endResetModel();
 }

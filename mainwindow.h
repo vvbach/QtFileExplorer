@@ -5,11 +5,14 @@
 #include <QFileSystemModel>
 #include <QVector>
 #include <QFileInfo>
+#include <QThread>
 #include "filesystemmodel.h"
+#include "searchworker.h"
 
 QT_BEGIN_NAMESPACE
-namespace Ui {
-class MainWindow;
+namespace Ui
+{
+    class MainWindow;
 }
 QT_END_NAMESPACE
 
@@ -21,17 +24,20 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    QVector<QFileInfo> searchFile(const QString& directory, const QString& searchName);
+    void searchFile(const QString &directory, const QString &searchName);
 
 private slots:
     void onFileSystemItemSelected(const QModelIndex &index);
     void onTreeItemSelected(const QModelIndex &index);
     void onUpDirButtonClicked();
     void onSearchButtonClicked();
+    void onCancelButtonClicked();
 
 private:
     Ui::MainWindow *ui;
     QFileSystemModel *dirModel;
     FileSystemModel *fileModel;
+    SearchWorker *searchWorker;
+    QThread *searchThread;
 };
-#endif 
+#endif

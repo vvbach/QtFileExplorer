@@ -19,11 +19,12 @@ public:
 
     void loadDirectory(const QString &path);
     QString filePath(int row) const;
-    
+
     QString getCurrentPath();
     void setCurrentPath(const QString &path);
 
-    void displaySearchResult(const QVector<QFileInfo>& results);
+    void clear();
+    void displaySearchResult(const QFileInfo &file);
 
 private:
     QString currentPath;
