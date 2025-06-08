@@ -1,28 +1,24 @@
-#ifndef SEARCHWORKER_H
-#define SEARCHWORKER_H
+#ifndef NAMESEARCHWORKER_H
+#define NAMESEARCHWORKER_H
 
 #include <QObject>
 #include <QAtomicInt>
 #include <QDir>
+#include "abstractsearchworker.h"
 
-class SearchWorker : public QObject
+class NameSearchWorker : public AbstractSearchWorker
 {
     Q_OBJECT
 public:
-    explicit SearchWorker(QObject *parent = nullptr);
-
-signals:
-    void fileFound(const QFileInfo &file);
-    void searchFinished();
-    void searchCanceled();
+    NameSearchWorker();
 
 public slots:
-    void startSearch(const QString &path, const QString &searchQuery);
-    void cancelSearch();
+    void startSearch(const QString &path, const QString &searchQuery) override;
+    void cancelSearch() override;
 
 private:
     void recursiveSearch(const QDir &dir, const QString &searchTerm);
     QAtomicInt cancelRequested;
 };
 
-#endif // SEARCHWORKER_H
+#endif // NAMESEARCHWORKER_H

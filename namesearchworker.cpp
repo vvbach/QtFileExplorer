@@ -1,12 +1,12 @@
-#include "searchworker.h"
+#include "namesearchworker.h"
 #include <QDebug>
 
-SearchWorker::SearchWorker(QObject *parent)
+NameSearchWorker::NameSearchWorker()
 {
     cancelRequested = false;
 }
 
-void SearchWorker::startSearch(const QString &path, const QString &searchQuery)
+void NameSearchWorker::startSearch(const QString &path, const QString &searchQuery)
 {
     cancelRequested = false;
     recursiveSearch(QDir(path), searchQuery);
@@ -17,12 +17,12 @@ void SearchWorker::startSearch(const QString &path, const QString &searchQuery)
         emit searchFinished();
 }
 
-void SearchWorker::cancelSearch()
+void NameSearchWorker::cancelSearch()
 {
     cancelRequested = true;
 }
 
-void SearchWorker::recursiveSearch(const QDir &dir, const QString &searchQuery)
+void NameSearchWorker::recursiveSearch(const QDir &dir, const QString &searchQuery)
 {
     if (cancelRequested)
         return;

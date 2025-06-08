@@ -7,7 +7,7 @@
 #include <QFileInfo>
 #include <QThread>
 #include "filesystemmodel.h"
-#include "searchworker.h"
+#include "searchcontroller.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui
@@ -37,7 +37,6 @@ private:
     Ui::MainWindow *ui;
     QFileSystemModel *dirModel;
     FileSystemModel *fileModel;
-    SearchWorker *searchWorker;
-    QThread *searchThread;
+    SearchController *searchController;
 };
 #endif

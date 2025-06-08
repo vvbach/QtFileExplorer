@@ -4,7 +4,7 @@
 #include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow)
+    : QMainWindow(parent), ui(new Ui::MainWindow), searchController(nullptr)
 {
     ui->setupUi(this);
     ui->splitter->setStretchFactor(0, 1);
@@ -81,39 +81,59 @@ void MainWindow::onUpDirButtonClicked()
 
 void MainWindow::onSearchButtonClicked()
 {
-    QString searchName = ui->pathInput->text().trimmed();
-    if (searchName.isEmpty())
+    QString searchQuery = ui->pathInput->text().trimmed();
+    if (searchQuery.isEmpty())
         return;
     QString directory = fileModel->getCurrentPath();
 
+    if (searchController) {
+        qDebug() << "delete search";
+        searchController->cancel();
+        searchController->deleteLater();
+        searchController = nullptr;
+        
+        qDebug() << "done delete search";
+    }
+
+    searchController = new SearchController();
+    QString mode = ui->modeBox->currentText();
+    searchController->setWorker(mode);
     ui->cancelButton->show();
     ui->searchButton->hide();
-    searchThread = new QThread();
-    searchWorker = new SearchWorker();
-    searchWorker->moveToThread(searchThread);
-    fileModel->clear(); 
-
-    connect(searchThread, &QThread::started, [=]()
-            { searchWorker->startSearch(directory, searchName); });
-    connect(searchWorker, &SearchWorker::fileFound, fileModel, &FileSystemModel::displaySearchResult);
+    qDebug() << "set search";
 
     auto finalize = [this]() {
         ui->cancelButton->hide();
         ui->searchButton->show();
-        if (searchThread && searchThread->isRunning()) {
-            searchThread->quit();
-        }
-        searchWorker = nullptr;
-        searchThread = nullptr;
     };
-    connect(searchWorker, &SearchWorker::searchFinished, this, finalize);
-    connect(searchWorker, &SearchWorker::searchCanceled, this, finalize);
-    connect(searchThread, &QThread::finished, searchWorker, &QObject::deleteLater);
-    connect(searchThread, &QThread::finished, searchThread, &QObject::deleteLater);
-    searchThread->start();
+    connect(searchController, &SearchController::fileFound,
+            fileModel, &FileSystemModel::displaySearchResult);
+
+    connect(searchController, &SearchController::searchFinished,
+            this, [=]()
+            { 
+                finalize();
+                qDebug() << "Search finished"; 
+            });
+
+    connect(searchController, &SearchController::searchCanceled,
+            this, [=]()
+            { 
+                finalize();
+                qDebug() << "Search canceled"; 
+            });
+        
+    qDebug() << "before start search";
+    fileModel->clear();
+    searchController->startSearch(directory, searchQuery);
 }
 
 void MainWindow::onCancelButtonClicked()
 {
-    if (searchWorker) searchWorker->cancelSearch();
+    if (searchController)
+    {
+        searchController->cancel();
+        searchController->deleteLater();
+        searchController = nullptr;
+    }
 }

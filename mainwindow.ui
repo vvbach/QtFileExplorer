@@ -35,6 +35,20 @@
         <widget class="QLineEdit" name="pathInput"/>
        </item>
        <item>
+        <widget class="QComboBox" name="modeBox">
+         <item>
+          <property name="text">
+           <string>Name</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Content</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="cancelButton">
          <property name="text">
           <string>Cancel</string>
