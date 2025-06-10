@@ -28,7 +28,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         contentsearchworker.h contentsearchworker.cpp
         searchcontroller.h searchcontroller.cpp
         abstractsearchworker.h
-        contentsearchtask.h contentsearchtask.cpp
+        contentsearchtask.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET FileExplorer APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

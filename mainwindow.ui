@@ -23,18 +23,29 @@
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <item>
      <widget class="QWidget" name="actionWidget" native="true">
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <item>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="2" column="3">
+        <widget class="QPushButton" name="cancelButton">
+         <property name="text">
+          <string>Cancel</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="4">
+        <widget class="QPushButton" name="searchButton">
+         <property name="text">
+          <string>Search</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
         <widget class="QPushButton" name="goUpDirButton">
          <property name="text">
           <string>Up</string>
          </property>
         </widget>
        </item>
-       <item>
-        <widget class="QLineEdit" name="pathInput"/>
-       </item>
-       <item>
+       <item row="2" column="2">
         <widget class="QComboBox" name="modeBox">
          <item>
           <property name="text">
@@ -48,17 +59,13 @@
          </item>
         </widget>
        </item>
-       <item>
-        <widget class="QPushButton" name="cancelButton">
-         <property name="text">
-          <string>Cancel</string>
-         </property>
-        </widget>
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="searchInput"/>
        </item>
-       <item>
-        <widget class="QPushButton" name="searchButton">
+       <item row="1" column="0" colspan="5">
+        <widget class="QLabel" name="pathLabel">
          <property name="text">
-          <string>Search</string>
+          <string/>
          </property>
         </widget>
        </item>

@@ -25,6 +25,8 @@ public:
 
     void clear();
     void displaySearchResult(const QFileInfo &file);
+    
+    bool searchMode = false;
 
 private:
     QString currentPath;

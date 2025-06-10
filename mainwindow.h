@@ -32,11 +32,13 @@ private slots:
     void onUpDirButtonClicked();
     void onSearchButtonClicked();
     void onCancelButtonClicked();
+    void showContextMenu(const QPoint &pos);
 
 private:
     Ui::MainWindow *ui;
     QFileSystemModel *dirModel;
     FileSystemModel *fileModel;
     SearchController *searchController;
+    bool inSearchMode = false;
 };
 #endif

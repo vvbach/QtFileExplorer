@@ -12,7 +12,7 @@ int FileSystemModel::rowCount(const QModelIndex &) const
 
 int FileSystemModel::columnCount(const QModelIndex &) const
 {
-    return 5; // Name, Size, Created, Modified, Permissions
+    return searchMode ? 6 : 5; // Name, Size, Created, Modified, Permissions
 }
 
 QVariant FileSystemModel::data(const QModelIndex &index, int role) const
@@ -48,6 +48,8 @@ QVariant FileSystemModel::data(const QModelIndex &index, int role) const
             return info.lastModified().toString("yyyy-MM-dd HH:mm:ss");
         case 4:
             return permStr;
+        case 5:
+            return info.absoluteFilePath();
         }
     }
 
@@ -78,6 +80,8 @@ QVariant FileSystemModel::headerData(int section, Qt::Orientation orientation, i
             return "Modified";
         case 4:
             return "Permission";
+        case 5:
+            return "Path";
         }
     }
     return QVariant();
@@ -88,6 +92,8 @@ void FileSystemModel::loadDirectory(const QString &path)
     QDir dir(path);
     fileInfoList = dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries, QDir::DirsFirst | QDir::Name);
     currentPath = path;
+
+    searchMode = false;
 
     beginResetModel();
     endResetModel();
@@ -123,5 +129,6 @@ void FileSystemModel::clear()
 {
     beginResetModel();
     fileInfoList.clear();
+    searchMode = true;
     endResetModel();
 }

@@ -1,5 +1,4 @@
 #include "contentsearchworker.h"
-#include "contentsearchtask.h"
 #include <QThreadPool>
 #include <QDir>
 #include <QDebug>
@@ -26,7 +25,7 @@ void ContentSearchWorker::startSearch(const QString &path, const QString &search
 
     connect(dirThread, QThread::finished, dirThread, QThread::deleteLater);
     dirThread->start();
-    startTasks(4);
+    startTasks(QThread::idealThreadCount());
 }
 
 void ContentSearchWorker::recursiveSearch(const QDir &dir)
@@ -55,6 +54,7 @@ void ContentSearchWorker::recursiveSearch(const QDir &dir)
 
 void ContentSearchWorker::startTasks(int numThreads)
 {
+    qDebug() << numThreads;
     for (int i = 0; i < numThreads; i++)
     {
         activeThreadCount++;
