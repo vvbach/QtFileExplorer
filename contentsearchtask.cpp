@@ -15,10 +15,12 @@ void ContentSearchTask::run()
             QMutexLocker locker(&worker->queueMutex);
             while (worker->taskQueue.isEmpty() && !worker->enqueueDone && !worker->cancelRequested)
             {
+                qDebug() << "waiting task";
                 worker->queueNotEmpty.wait(&worker->queueMutex);
             }
             if (worker->cancelRequested || (worker->taskQueue.isEmpty() && worker->enqueueDone))
             {
+                qDebug() << "stop task";
                 break;
             }
             file = worker->taskQueue.dequeue();
@@ -40,7 +42,14 @@ void ContentSearchTask::run()
         }
     }
 
-    if (--worker->activeThreadCount == 0)
+    bool lastThread = false;
+    {
+        QMutexLocker locker(&worker->queueMutex);
+        worker->activeThreadCount--;
+        lastThread = (worker->activeThreadCount == 0);
+    }
+
+    if (lastThread)
     {
         if (worker->cancelRequested)
             emit worker->searchCanceled();
