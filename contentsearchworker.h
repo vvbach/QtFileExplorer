@@ -4,7 +4,6 @@
 #include <QObject>
 #include <QFileInfo>
 #include "abstractsearchworker.h"
-#include <QSemaphore>
 #include <QThreadPool>
 #include <QMutex>
 #include <QWaitCondition>
@@ -16,20 +15,11 @@ class ContentSearchWorker : public AbstractSearchWorker
 public:
     ContentSearchWorker();
 
-    // QAtomicInt cancelRequested;
-    // QAtomicInt enqueueDone;
-    // QQueue<QFileInfo> taskQueue;
-    // QMutex queueMutex;
-    // QWaitCondition queueNotEmpty;
-
-    // int activeThreadCount = 0;
-
     MSQueue<QFileInfo> taskQueue;
     std::atomic<bool> cancelRequested = false;
     std::atomic<bool> enqueueDone = false;
     std::atomic<int> activeThreadCount = 0;
     QString searchQuery;
-    QSemaphore taskAvailable;
 
 public slots:
     void startSearch(const QString &path, const QString &searchQuery) override;
@@ -45,12 +35,13 @@ private:
 class ContentSearchTask : public QRunnable
 {
 public:
-    ContentSearchTask(ContentSearchWorker* worker);
+    ContentSearchTask(ContentSearchWorker* worker, int number);
 
 protected:
     void run() override;
 
 private:
+    int number;
     ContentSearchWorker* worker;
 };
 

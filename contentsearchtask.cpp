@@ -1,7 +1,7 @@
 #include "contentsearchworker.h"
 
-ContentSearchTask::ContentSearchTask(ContentSearchWorker *worker)
-    : worker(worker)
+ContentSearchTask::ContentSearchTask(ContentSearchWorker *worker, int number)
+    : worker(worker), number(number)
 {
     setAutoDelete(true);
 }
@@ -10,15 +10,21 @@ void ContentSearchTask::run()
 {
     while (!worker->cancelRequested)
     {
-        if (!worker->taskAvailable.tryAcquire(100)) { // timeout to check cancel
-            if (worker->cancelRequested || (worker->enqueueDone && worker->taskQueue.empty()))
+        QFileInfo file;
+        bool gotTask = false;
+
+        while (!(gotTask = worker->taskQueue.dequeue(file)) &&
+               !worker->enqueueDone.load() &&
+               !worker->cancelRequested.load()) {
+            qDebug() << "Thread " << number << "is waiting";
+            QThread::msleep(10);
+        }
+
+        if (!gotTask) {
+            if (worker->cancelRequested || worker->enqueueDone.load())
                 break;
             continue;
         }
-
-        QFileInfo file;
-        if (!worker->taskQueue.dequeue(file))
-            continue; 
 
         QFile f(file.absoluteFilePath());
         if (f.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -43,5 +49,6 @@ void ContentSearchTask::run()
             emit worker->searchCanceled();
         else
             emit worker->searchFinished();
+        qDebug() << "Done";
     }
 }

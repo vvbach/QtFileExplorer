@@ -3,8 +3,6 @@
 
 #include <atomic>
 
-#include <atomic>
-
 template <typename T>
 class MSQueue {
 private:
@@ -55,11 +53,11 @@ public:
             Node* next = first->next.load();
 
             if (next == nullptr) {
-                return false;  
+                return false;
             }
 
+            out = next->value;
             if (head.compare_exchange_weak(first, next)) {
-                out = next->value;
                 delete first;
                 return true;
             }
