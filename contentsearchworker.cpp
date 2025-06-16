@@ -40,11 +40,11 @@ void ContentSearchWorker::recursiveSearch(const QDir &dir)
 
         if (entry.isDir())
         {
-            recursiveSearch(QDir(entry.filePath()));
+            recursiveSearch(QDir(entry.absoluteFilePath()));
         }
         else
         {
-            taskQueue.enqueue(entry);
+            taskQueue.enqueue(entry.absoluteFilePath());
         }
     }
 }

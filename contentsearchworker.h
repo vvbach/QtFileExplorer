@@ -15,7 +15,7 @@ class ContentSearchWorker : public AbstractSearchWorker
 public:
     ContentSearchWorker();
 
-    MSQueue<QFileInfo> taskQueue;
+    MSQueue<QString> taskQueue;
     std::atomic<bool> cancelRequested = false;
     std::atomic<bool> enqueueDone = false;
     std::atomic<int> activeThreadCount = 0;

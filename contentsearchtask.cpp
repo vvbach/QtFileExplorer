@@ -10,10 +10,10 @@ void ContentSearchTask::run()
 {
     while (!worker->cancelRequested)
     {
-        QFileInfo file;
+        QString filePath;
         bool gotTask = false;
 
-        while (!(gotTask = worker->taskQueue.dequeue(file)) &&
+        while (!(gotTask = worker->taskQueue.dequeue(filePath)) &&
                !worker->enqueueDone.load() &&
                !worker->cancelRequested.load()) {
             qDebug() << "Thread " << number << "is waiting";
@@ -26,7 +26,7 @@ void ContentSearchTask::run()
             continue;
         }
 
-        QFile f(file.absoluteFilePath());
+        QFile f(filePath);
         if (f.open(QIODevice::ReadOnly | QIODevice::Text))
         {
             QTextStream in(&f);
@@ -35,6 +35,7 @@ void ContentSearchTask::run()
                 QString line = in.readLine();
                 if (line.contains(worker->searchQuery, Qt::CaseInsensitive))
                 {
+                    QFileInfo file(filePath);
                     emit worker->fileFound(file);
                     break;
                 }
