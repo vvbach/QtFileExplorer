@@ -10,21 +10,16 @@ void ContentSearchTask::run()
 {
     while (!worker->cancelRequested)
     {
-        QFileInfo file;
-        {
-            QMutexLocker locker(&worker->queueMutex);
-            while (worker->taskQueue.isEmpty() && !worker->enqueueDone && !worker->cancelRequested)
-            {
-                qDebug() << "waiting task";
-                worker->queueNotEmpty.wait(&worker->queueMutex);
-            }
-            if (worker->cancelRequested || (worker->taskQueue.isEmpty() && worker->enqueueDone))
-            {
-                qDebug() << "stop task";
+        if (!worker->taskAvailable.tryAcquire(100)) { // timeout to check cancel
+            if (worker->cancelRequested || (worker->enqueueDone && worker->taskQueue.empty()))
                 break;
-            }
-            file = worker->taskQueue.dequeue();
+            continue;
         }
+
+        QFileInfo file;
+        if (!worker->taskQueue.dequeue(file))
+            continue; 
+
         QFile f(file.absoluteFilePath());
         if (f.open(QIODevice::ReadOnly | QIODevice::Text))
         {
@@ -42,15 +37,8 @@ void ContentSearchTask::run()
         }
     }
 
-    bool lastThread = false;
-    {
-        QMutexLocker locker(&worker->queueMutex);
-        worker->activeThreadCount--;
-        lastThread = (worker->activeThreadCount == 0);
-    }
-
-    if (lastThread)
-    {
+    int remaining = --worker->activeThreadCount;
+    if (remaining == 0) {
         if (worker->cancelRequested)
             emit worker->searchCanceled();
         else
