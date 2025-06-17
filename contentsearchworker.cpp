@@ -8,7 +8,11 @@ ContentSearchWorker::ContentSearchWorker() {}
 void ContentSearchWorker::cancelSearch()
 {
     cancelRequested = true;
-    taskQueue.empty();
+    while (activeThreadCount > 0) {
+        QThread::msleep(10);
+    }
+
+    taskQueue.clear();
 }
 
 void ContentSearchWorker::startSearch(const QString &path, const QString &searchQuery)

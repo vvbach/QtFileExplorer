@@ -25,8 +25,7 @@ public:
     }
 
     ~MSQueue() {
-        T temp;
-        while (dequeue(temp));
+        clear();
         delete head.load();
     }
 
@@ -56,16 +55,17 @@ public:
                 return false;
             }
 
-            out = next->value;
             if (head.compare_exchange_weak(first, next)) {
+                out = next->value;
                 delete first;
                 return true;
             }
         }
     }
 
-    bool empty() const {
-        return head.load()->next.load() == nullptr;
+    void clear(){
+        T temp;
+        while (dequeue(temp));
     }
 };
 
