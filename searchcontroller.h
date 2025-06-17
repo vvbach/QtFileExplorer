@@ -6,8 +6,6 @@
 #include "abstractsearchworker.h"
 #include <QThread>
 
-enum class SearchMode { Name, Content };
-
 class SearchController : public QObject
 {
     Q_OBJECT

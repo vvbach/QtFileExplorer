@@ -8,11 +8,11 @@ ContentSearchWorker::ContentSearchWorker() {}
 void ContentSearchWorker::cancelSearch()
 {
     cancelRequested = true;
-    {
-        QMutexLocker locker(&queueMutex);
-        taskQueue.clear();
+    while (activeThreadCount > 0) {
+        QThread::msleep(10);
     }
-    queueNotEmpty.wakeAll();
+
+    taskQueue.clear();
 }
 
 void ContentSearchWorker::startSearch(const QString &path, const QString &searchQuery)
@@ -20,16 +20,15 @@ void ContentSearchWorker::startSearch(const QString &path, const QString &search
     cancelRequested = false;
     enqueueDone = false;
     this->searchQuery = searchQuery;
+    startTasks(QThread::idealThreadCount());
     QThread *dirThread = QThread::create([this, path]()
     {
         recursiveSearch(QDir(path));
         enqueueDone = true;
-        queueNotEmpty.wakeAll(); 
     });
 
     connect(dirThread, &QThread::finished, dirThread, &QThread::deleteLater);
     dirThread->start();
-    startTasks(QThread::idealThreadCount());
 }
 
 void ContentSearchWorker::recursiveSearch(const QDir &dir)
@@ -45,13 +44,11 @@ void ContentSearchWorker::recursiveSearch(const QDir &dir)
 
         if (entry.isDir())
         {
-            recursiveSearch(QDir(entry.filePath()));
+            recursiveSearch(QDir(entry.absoluteFilePath()));
         }
         else
         {
-            QMutexLocker locker(&queueMutex);
-            taskQueue.enqueue(entry);
-            queueNotEmpty.wakeOne();
+            taskQueue.enqueue(entry.absoluteFilePath());
         }
     }
 }
@@ -62,6 +59,6 @@ void ContentSearchWorker::startTasks(int numThreads)
     for (int i = 0; i < numThreads; i++)
     {
         activeThreadCount++;
-        QThreadPool::globalInstance()->start(new ContentSearchTask(this));
+        QThreadPool::globalInstance()->start(new ContentSearchTask(this, i));
     }
 }

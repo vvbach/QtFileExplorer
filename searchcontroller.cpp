@@ -55,6 +55,7 @@ void SearchController::cancel(){
         worker->cancelSearch();
     }
     if (workerThread){
+        qDebug() << "Cancelling search thread";
         workerThread->quit();
         workerThread->wait();
         workerThread = nullptr;

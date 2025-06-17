@@ -1,7 +1,7 @@
 #include "contentsearchworker.h"
 
-ContentSearchTask::ContentSearchTask(ContentSearchWorker *worker)
-    : worker(worker)
+ContentSearchTask::ContentSearchTask(ContentSearchWorker *worker, int number)
+    : worker(worker), number(number)
 {
     setAutoDelete(true);
 }
@@ -10,22 +10,23 @@ void ContentSearchTask::run()
 {
     while (!worker->cancelRequested)
     {
-        QFileInfo file;
-        {
-            QMutexLocker locker(&worker->queueMutex);
-            while (worker->taskQueue.isEmpty() && !worker->enqueueDone && !worker->cancelRequested)
-            {
-                qDebug() << "waiting task";
-                worker->queueNotEmpty.wait(&worker->queueMutex);
-            }
-            if (worker->cancelRequested || (worker->taskQueue.isEmpty() && worker->enqueueDone))
-            {
-                qDebug() << "stop task";
-                break;
-            }
-            file = worker->taskQueue.dequeue();
+        QString filePath;
+        bool gotTask = false;
+
+        while (!(gotTask = worker->taskQueue.dequeue(filePath)) &&
+               !worker->enqueueDone.load() &&
+               !worker->cancelRequested.load()) {
+            qDebug() << "Thread " << number << "is waiting";
+            QThread::msleep(10);
         }
-        QFile f(file.absoluteFilePath());
+
+        if (!gotTask) {
+            if (worker->cancelRequested || worker->enqueueDone.load())
+                break;
+            continue;
+        }
+
+        QFile f(filePath);
         if (f.open(QIODevice::ReadOnly | QIODevice::Text))
         {
             QTextStream in(&f);
@@ -34,6 +35,7 @@ void ContentSearchTask::run()
                 QString line = in.readLine();
                 if (line.contains(worker->searchQuery, Qt::CaseInsensitive))
                 {
+                    QFileInfo file(filePath);
                     emit worker->fileFound(file);
                     break;
                 }
@@ -42,18 +44,12 @@ void ContentSearchTask::run()
         }
     }
 
-    bool lastThread = false;
-    {
-        QMutexLocker locker(&worker->queueMutex);
-        worker->activeThreadCount--;
-        lastThread = (worker->activeThreadCount == 0);
-    }
-
-    if (lastThread)
-    {
+    int remaining = --worker->activeThreadCount;
+    if (remaining == 0) {
         if (worker->cancelRequested)
             emit worker->searchCanceled();
         else
             emit worker->searchFinished();
+        qDebug() << "Done";
     }
 }
